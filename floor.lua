@@ -8,55 +8,68 @@ ORIGHT = {x= 1, y= 0}
 OBACK  = {x= 0, y=-1}
 OLEFT  = {x=-1, y= 0}
 
-local T = {}
+local Task = {}
 T.__index = T
 
-function T:new(pos, dir, slot)
+function Task:new(pos, dir, slot)
   local self = setmetatable({}, T)
   self.pos = pos
   self.dir = dir
   self.sPos = {x=pos.x,y=pos.y}
   self.sDir = dir
   print("init a turtle")
-  if slot and slot ~= 0 then
-    self.place = true
-    turtle.select(slot)
-    print("using slot "..slot)
+  if slot and slot == 0 then
+    self.slot = 1
+  else
+    self.slot = slot
+  end
+  self.doJob = self:noop
+  turtle.select(self.slot)
+  print("using slot "..slot)
   else
     self.place = false
   end
   return self
 end
 
-function T:moveOne()
+function Task:noop()
+end
+
+function Task:place()
+  if not turtle.detectDown() then
+    success = turtle.placeDown(1)
+    while not success then
+      result = turtle.placeDown(1)
+      self.slot = self.slot + 1
+      turtle.select(self.slot)
+    end
+    print("place a block below")
+  end
+end
+
+function Task:moveOne()
   self.pos.x = self.pos.x + self.dir.x
   self.pos.y = self.pos.y + self.dir.y
   -- print("moving forward to "..self.pos.x..","..self.pos.y)
 end
 
-function T:move(distance)
+function Task:move(distance)
   moved = 0
   for i=1,distance do
     result = turtle.forward()
     if result then
       self:moveOne()
       moved = moved + 1
-      if self.place and not turtle.detectDown() then
-        result = turtle.placeDown(1)
-        if result then
-          print("placed a block below")
-        end
-      end
+      self.doJob()
     else
-      print("moved "..moved.." blocks")
-      return moved
+      break
     end 
   end
   print("moved "..moved.." blocks")
   return moved
 end
 
-function T:right()
+function Task:right()
   if self.dir == OLEFT then
     self.dir = OFRONT
     print("facing to the original front")
@@ -73,7 +86,7 @@ function T:right()
   turtle.turnRight()
 end
 
-function T:left()
+function Task:left()
   if self.dir == OLEFT then
     self.dir = OBACK
     print("facing to the original back")
@@ -90,7 +103,7 @@ function T:left()
   turtle.turnLeft()
 end
 
-function T:cover(distance, width)
+function Task:cover(distance, width)
   h = 0
   print("covering "..distance.." X "..width)
   while h < width do
@@ -116,5 +129,6 @@ local w = tonumber(arg[2])
 if #arg == 3 then
   slot = tonumber(arg[3])
 end
-local t = T:new({x=0,y=0},OFRONT, slot)
-t:cover(d,w)
+local t = Task:new({x=0,y=0},OFRONT, slot)
+Task:doJob = Task:place
+Task:cover(d,w)
