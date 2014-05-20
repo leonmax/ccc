@@ -3,15 +3,15 @@ ORIGHT = {x= 1, y= 0}
 OBACK  = {x= 0, y=-1}
 OLEFT  = {x=-1, y= 0}
 
-local Task = {}
+Task = {}
 Task.__index = Task
 
-function Task.new(pos, dir, actor)
+function Task.new(actor)   
   local self = setmetatable({}, Task)
-  self.pos = pos
-  self.dir = dir
-  self.sPos = {x=pos.x,y=pos.y}
-  self.sDir = dir
+  self.pos = {x=0, y=0}
+  self.dir = OFRONT
+  self.sPos = {x=0,y=0}
+  self.sDir = OFRONT
   self.actor = actor
   return self
 end
@@ -97,50 +97,4 @@ function Task.cover(self, distance, width)
   print("final pos: ("..self.pos.x..","..self.pos.y..") dir: ("..self.dir.x..","..self.dir.y..")")
 end
 
-local Placer = {}
-Placer.__index = Placer
-
-function Placer.new(slot)
-  local self = setmetatable({}, Placer)
-  self.slot = 1
-  if slot and slot ~= 0 then
-    self.slot = slot
-  end
-  turtle.select(self.slot)
-  return self
-end
-
-function Placer.act(self)
-  if not turtle.detectDown() then
-    local success = turtle.placeDown(1)
-    while not success do
-      success = turtle.placeDown(1)
-      self:switchSlot()
-    end
-    print("place a block below")
-  end
-end
-
-function Placer.switchSlot(self)
-  self.slot = self.slot + 1
-  turtle.select(self.slot)
-  -- handle overflow
-  print("using slot "..self.slot)
-end
-
-local arg = { ... }
-if #arg < 2 then
-  print("Usage: floor <distance> <width> [<slotnum>]")
-end
-
-local slot = 0
-local d = tonumber(arg[1])
-local w = tonumber(arg[2])
-if #arg == 3 then
-  slot = tonumber(arg[3])
-end
-local actor = Placer.new(slot)
-local task = Task.new({x=0,y=0},OFRONT, actor)
-task:cover(d,w)
--- actor:act()
-
+return Task
