@@ -23,7 +23,12 @@ function Task.moveOne(self)
 end
 
 function Task.move(self, distance)
-  moved = 0
+  local moved = 0
+  if distance < 0 then
+    self:right()
+    self:right()
+  end
+  local step = math.abs(distance)
   for i=1,distance do
     result = turtle.forward()
     if result then
@@ -32,7 +37,7 @@ function Task.move(self, distance)
       self.actor:act()
     else
       break
-    end 
+    end
   end
   print("moved "..moved.." blocks")
   return moved
@@ -95,6 +100,21 @@ function Task.cover(self, distance, width)
   self:move(width-1)
   self:right()
   print("final pos: ("..self.pos.x..","..self.pos.y..") dir: ("..self.dir.x..","..self.dir.y..")")
+end
+
+local xor = function(a, b)
+  return (a and not b) or (not a and b)
+end
+
+function Task.to(self, relativeX, relativeY)
+  self:move(relativeY - self.pos.y)
+  --if xor(relativeX < 0, relativeY < 0) then
+  --  self:left()
+  --else
+  --  self:right()
+  --end
+  self:right()
+  self:move(relativeX - self.pos.x)
 end
 
 return Task

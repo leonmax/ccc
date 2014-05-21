@@ -43,5 +43,5 @@ if #arg == 3 then
   slot = tonumber(arg[3])
 end
 local actor = Placer.new(slot)
-task.Task.new(actor):cover(d,w)
-
+--task.Task.new(actor):cover(d,w)
+task.Task.new(actor):to(w,d)
