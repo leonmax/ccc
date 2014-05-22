@@ -30,14 +30,14 @@ end
 
 local arg = { ... }
 if #arg < 2 then
-  print("Usage: floor <distance> <width> [<slotnum>]")
+  print("Usage: placer <width> <distance> [<slotnum>]")
 end
 
 local slot = 0
-local d = tonumber(arg[1])
-local w = tonumber(arg[2])
+local w = tonumber(arg[1])
+local d = tonumber(arg[2])
 if #arg == 3 then
   slot = tonumber(arg[3])
 end
 local actor = Placer.new(slot)
-task.Task.new(actor):cover(d,w)
+task.Task.new(actor):cover(w, d)

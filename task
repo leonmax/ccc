@@ -1,123 +1,169 @@
-OFRONT = {x= 0, y= 1}
-ORIGHT = {x= 1, y= 0}
-OBACK  = {x= 0, y=-1}
-OLEFT  = {x=-1, y= 0}
+FRONT = vector.new( 0,  1,  0)
+RIGHT = vector.new( 1,  0,  0)
+BACK  = vector.new( 0, -1,  0)
+LEFT  = vector.new(-1,  0,  0)
+UP    = vector.new( 0,  0,  1)
+DOWN  = vector.new( 0,  0, -1)
 
 Task = {}
 Task.__index = Task
 
 function Task.new(actor)
   local self = setmetatable({}, Task)
-  self.pos = {x=0, y=0}
-  self.dir = OFRONT
-  self.sPos = {x=0,y=0}
-  self.sDir = OFRONT
+  self.pos = vector.new(0, 0, 0)
+  self.dir = FRONT
+  self.sPos = vector.new(0, 0, 0)
+  self.sDir = FRONT
   self.actor = actor
   return self
 end
 
-function Task.moveOne(self)
-  self.pos.x = self.pos.x + self.dir.x
-  self.pos.y = self.pos.y + self.dir.y
-  -- print("moving forward to "..self.pos.x..","..self.pos.y)
+function Task.forward(self)
+  local result = turtle.forward()
+  if result then
+    self.pos = self.pos + self.dir
+    -- print("moved to "..self.pos:tostring())
+    self.actor:act()
+    return 1
+  else
+    return 0
+  end
 end
 
-function Task.move(self, distance)
-  local moved = 0
-  if distance < 0 then
-    self:right()
-    self:right()
+function Task.back(self)
+  local result = turtle.back()
+  if result then
+    self.pos = self.pos - self.dir
+    -- print("moved to "..self.pos:tostring())
+    self.actor:act()
+    return -1
+  else
+    return 0
   end
-  local step = math.abs(distance)
-  for i=1,step do
-    result = turtle.forward()
+end
+
+function Task.up(self, step)
+  if step == nil then step = 1 end
+  local i = 0
+  while i < step do
+    local result = turtle.up()
     if result then
-      self:moveOne()
-      moved = moved + 1
+      self.pos = self.pos + UP
+      -- print("moved to "..self.pos:tostring())
       self.actor:act()
+      i = i + 1
+    else
+      return 0
+    end
+  end
+  return i
+end
+
+function Task.down(self)
+  if step == nil then step = -1 end
+  local i = 0
+  while i > step do
+    local result = turtle.down()
+    if result then
+      self.pos = self.pos + DOWN
+      -- print("moved to "..self.pos:tostring())
+      self.actor:act()
+      i = i - 1
     else
       break
     end
   end
-  if distance < 0 then
-    self:right()
-    self:right()
+  return i
+end
+
+function Task.move(self, distance)
+  local moved = 0
+  local step = math.abs(distance)
+  for i=1,step do
+    local thismove = 0
+    if distance >= 0 then
+      thismove = self:forward()
+    else
+      thismove = self:back()
+    end
+    if thismove == 0 then
+      break
+    else
+      moved = moved + thismove
+    end
   end
   print("moved "..moved.." blocks")
   return moved
 end
 
 function Task.right(self)
-  if self.dir == OLEFT then
-    self.dir = OFRONT
+  if self.dir == LEFT then
+    self.dir = FRONT
     print("face original front")
-  elseif self.dir == OFRONT then
-    self.dir = ORIGHT
+  elseif self.dir == FRONT then
+    self.dir = RIGHT
     print("face original right")
-  elseif self.dir == ORIGHT then
-    self.dir = OBACK
+  elseif self.dir == RIGHT then
+    self.dir = BACK
     print("face original back")
-  elseif self.dir == OBACK then
-    self.dir = OLEFT
+  elseif self.dir == BACK then
+    self.dir = LEFT
     print("face original left")
   end
   turtle.turnRight()
 end
 
 function Task.left(self)
-  if self.dir == OLEFT then
-    self.dir = OBACK
+  if self.dir == LEFT then
+    self.dir = BACK
     print("face original back")
-  elseif self.dir == OBACK then
-    self.dir = ORIGHT
+  elseif self.dir == BACK then
+    self.dir = RIGHT
     print("face original right")
-  elseif self.dir == ORIGHT then
-    self.dir = OFRONT
+  elseif self.dir == RIGHT then
+    self.dir = FRONT
     print("face original front")
-  elseif self.dir == OFRONT then
-    self.dir = OLEFT
+  elseif self.dir == FRONT then
+    self.dir = LEFT
     print("face original left")
   end
   turtle.turnLeft()
 end
 
-function Task.cover(self, distance, width)
-  local h = 0
-  print("covering "..distance.." X "..width)
-  while h < width do
-    self:move(distance)
-    h = h + 1
+function Task.cover(self, relativeX, relativeY)
+  local row = 0
+  print("covering "..relativeX.." X "..relativeY)
+  while row < relativeX do
+    self:move(relativeY - 1)
+    row = row + 1
     self:right()
-    if h < width then
-      self:move(1)
+    if row < relativeX then
+      self:forward()
     end
     self:right()
-    self:move(distance)
-    h = h + 1
+    self:move(relativeY - 1)
+    row = row + 1
     self:left()
-    if h < width then
-      self:move(1)
+    if row < relativeX then
+      self:forward()
     end
     self:left()
   end
   self:left()
-  self:move(width-1)
+  self:move(relativeX - 1)
   self:right()
-  print("final pos: ("..self.pos.x..","..self.pos.y..") dir: ("..self.dir.x..","..self.dir.y..")")
+  print("final pos: ("..self.pos:tostring()..") dir: ("..self.dir:tostring()..")")
 end
 
-local xor = function(a, b)
-  return (a and not b) or (not a and b)
-end
-
-function Task.to(self, relativeX, relativeY)
-  self:move(relativeY - self.pos.y)
-  if relativeX ~= 0 then
-    self:right()
-  end
-  self:move(relativeX - self.pos.x)
-  if relativeX ~= 0 then
-    self:left()
+function Task.to(self, relativeCo)
+  self:move(relativeCo.y - self.pos.y)
+  if relativeCo.x ~= 0 then self:right() end
+  self:move(relativeCo.x - self.pos.x)
+  if relativeCo.x ~= 0 then self:left() end
+  if relativeCo.z > 0 then
+    self:up(relativeCo.z)
+  elseif relativeCo.z < 0 then
+    self:down(relativeCo.z)
   end
 end
 

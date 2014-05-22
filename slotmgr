@@ -1,17 +1,23 @@
-local slot = 1
+local selectedSlot = 1
 
-function select(slot)
-  if slot == nil or slot <= 0 or slot > 16 then
-    turtle.selectSlot(slot)
+function select(s)
+  if s == nil or s <= 0 or s > 16 then
+    s = 1
   end
+  turtle.select(s)
+  print("selected slot "..s)
 end
 
 function getSelected()
-  return slot
+  if selectedSlot == nil or selectedSlot <= 0 or selectedSlot > 16 then
+    selectedSlot = 1
+  end
+  return selectedSlot
 end
 
 function reloadSlot(slot)
   origin = getSelected()
+  print("original selected slot "..origin)
   if slot == nil or slot <= 0 or slot > 16 then
     slot = origin
   end
@@ -19,8 +25,8 @@ function reloadSlot(slot)
   for from=1,16 do
     if from ~= slot then
         turtle.select(from)
-      if (turtle.getItemCount(slot) == 0 or
-          turtle.compareTo(slot) ) then
+      if (turtle.getItemCount(slot) == 0 or turtle.compareTo(slot)) and
+         turtle.getItemCount(from) > 0 then
         print("transfer from slot "..from.." to "..slot)
         turtle.transferTo(slot)
         turtle.select(slot)
