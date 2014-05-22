@@ -56,10 +56,11 @@ function Task.up(self, step)
       return 0
     end
   end
+  print("ascend "..i.." blocks")
   return i
 end
 
-function Task.down(self)
+function Task.down(self, step)
   if step == nil then step = -1 end
   local i = 0
   while i > step do
@@ -73,6 +74,7 @@ function Task.down(self)
       break
     end
   end
+  print("descend "..i.." blocks")
   return i
 end
 
@@ -96,7 +98,7 @@ function Task.move(self, distance)
   return moved
 end
 
-function Task.right(self)
+function Task.right(self, step)
   if self.dir == LEFT then
     self.dir = FRONT
     print("face original front")
@@ -111,9 +113,13 @@ function Task.right(self)
     print("face original left")
   end
   turtle.turnRight()
+
+  if step == nil then step = 0 end
+  self:move(step)
+
 end
 
-function Task.left(self)
+function Task.left(self, step)
   if self.dir == LEFT then
     self.dir = BACK
     print("face original back")
@@ -128,6 +134,9 @@ function Task.left(self)
     print("face original left")
   end
   turtle.turnLeft()
+
+  if step == nil then step = 0 end
+  self:move(step)
 end
 
 function Task.cover(self, relativeX, relativeY)
@@ -157,9 +166,10 @@ end
 
 function Task.to(self, relativeCo)
   self:move(relativeCo.y - self.pos.y)
-  if relativeCo.x ~= 0 then self:right() end
-  self:move(relativeCo.x - self.pos.x)
-  if relativeCo.x ~= 0 then self:left() end
+  if relativeCo.x - self.pos.x ~= 0 then
+    self:right(relativeCo.x - self.pos.x)
+    self:left()
+  end
   if relativeCo.z > 0 then
     self:up(relativeCo.z)
   elseif relativeCo.z < 0 then
