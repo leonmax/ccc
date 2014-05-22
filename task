@@ -15,13 +15,34 @@ function Task.new(actor)
   self.sPos = vector.new(0, 0, 0)
   self.sDir = FRONT
   self.actor = actor
+  self.coordinate = self:locate()
   return self
+end
+
+function Task.locate(self, inputCoordinate)
+  local x, y, z = gps.locate(5)
+  if x ~= nil then
+    self.coordinate = vector.new(x, y, z)
+    print("I am at "..self.coordinate:tostring())
+  elseif inputCoordinate ~= nil and inputCoordinate.x ~= nil then
+    self.coordinate = inputCoordinate
+    print("Manually input coordinate "..self.coordinate:tostring())
+  elseif self.coordinate == nil or self.coordinate.x == nil then
+    self.coordinate = vector.new(0, 0, 0)
+    print("Totally lost, assume at "..self.coordinate:tostring())
+  end
+  return self.coordinate
+end
+
+function relativePos(coordinate)
+  gps.locate()
 end
 
 function Task.forward(self)
   local result = turtle.forward()
   if result then
     self.pos = self.pos + self.dir
+    self.coordinate = self.coordinate + self.dir
     -- print("moved to "..self.pos:tostring())
     self.actor:act()
     return 1
@@ -34,6 +55,7 @@ function Task.back(self)
   local result = turtle.back()
   if result then
     self.pos = self.pos - self.dir
+    self.coordinate = self.coordinate - self.dir
     -- print("moved to "..self.pos:tostring())
     self.actor:act()
     return -1
@@ -49,6 +71,7 @@ function Task.up(self, step)
     local result = turtle.up()
     if result then
       self.pos = self.pos + UP
+      self.coordinate = self.coordinate - UP
       -- print("moved to "..self.pos:tostring())
       self.actor:act()
       i = i + 1
@@ -67,6 +90,7 @@ function Task.down(self, step)
     local result = turtle.down()
     if result then
       self.pos = self.pos + DOWN
+      self.coordinate = self.coordinate - DOWN
       -- print("moved to "..self.pos:tostring())
       self.actor:act()
       i = i - 1
@@ -162,6 +186,7 @@ function Task.cover(self, relativeX, relativeY)
   self:move(relativeX - 1)
   self:right()
   print("final pos: ("..self.pos:tostring()..") dir: ("..self.dir:tostring()..")")
+  print("final coordinate: "..self.coordinate:tostring())
 end
 
 function Task.to(self, relativeCo)
@@ -176,6 +201,7 @@ function Task.to(self, relativeCo)
     self:down(relativeCo.z)
   end
   print("final pos: ("..self.pos:tostring()..") dir: ("..self.dir:tostring()..")")
+  print("final coordinate: "..self.coordinate:tostring())
 end
 
 return Task
