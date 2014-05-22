@@ -6,7 +6,7 @@ Placer.__index = Placer
 
 function Placer.new(slot)
   local self = setmetatable({}, Placer)
-  slotmgr.select(1)
+  slotmgr.select(slot)
   return self
 end
 
@@ -30,7 +30,8 @@ end
 
 local arg = { ... }
 if #arg < 2 then
-  print("Usage: placer <width> <distance> [<slotnum>]")
+  local program = fs.getName(shell.getRunningProgram())
+  print("Usage: "..program.." <width> <distance> [<slotnum>]")
 end
 
 local slot = 0

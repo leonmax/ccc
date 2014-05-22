@@ -13,7 +13,8 @@ end
 
 local arg = { ... }
 if #arg < 2 then
-  print("Usage: walk <relative x> <relative y>")
+  local program = fs.getName(shell.getRunningProgram())
+  print("Usage: "..program.." <relative x> <relative y>")
 end
 
 local x = tonumber(arg[1])

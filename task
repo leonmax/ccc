@@ -165,6 +165,7 @@ function Task.to(self, relativeCo)
   elseif relativeCo.z < 0 then
     self:down(relativeCo.z)
   end
+  print("final pos: ("..self.pos:tostring()..") dir: ("..self.dir:tostring()..")")
 end
 
 return Task
