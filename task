@@ -6,7 +6,7 @@ OLEFT  = {x=-1, y= 0}
 Task = {}
 Task.__index = Task
 
-function Task.new(actor)   
+function Task.new(actor)
   local self = setmetatable({}, Task)
   self.pos = {x=0, y=0}
   self.dir = OFRONT
@@ -29,7 +29,7 @@ function Task.move(self, distance)
     self:right()
   end
   local step = math.abs(distance)
-  for i=1,distance do
+  for i=1,step do
     result = turtle.forward()
     if result then
       self:moveOne()
@@ -39,6 +39,10 @@ function Task.move(self, distance)
       break
     end
   end
+  if distance < 0 then
+    self:right()
+    self:right()
+  end
   print("moved "..moved.." blocks")
   return moved
 end
@@ -46,16 +50,16 @@ end
 function Task.right(self)
   if self.dir == OLEFT then
     self.dir = OFRONT
-    print("facing to the original front")
+    print("face original front")
   elseif self.dir == OFRONT then
     self.dir = ORIGHT
-    print("facing to the original right")
+    print("face original right")
   elseif self.dir == ORIGHT then
     self.dir = OBACK
-    print("facing to the original back")
+    print("face original back")
   elseif self.dir == OBACK then
     self.dir = OLEFT
-    print("facing to the original left")
+    print("face original left")
   end
   turtle.turnRight()
 end
@@ -63,16 +67,16 @@ end
 function Task.left(self)
   if self.dir == OLEFT then
     self.dir = OBACK
-    print("facing to the original back")
+    print("face original back")
   elseif self.dir == OBACK then
     self.dir = ORIGHT
-    print("facing to the original right")
+    print("face original right")
   elseif self.dir == ORIGHT then
     self.dir = OFRONT
-    print("facing to the original front")
+    print("face original front")
   elseif self.dir == OFRONT then
     self.dir = OLEFT
-    print("facing to the original left")
+    print("face original left")
   end
   turtle.turnLeft()
 end
@@ -87,7 +91,7 @@ function Task.cover(self, distance, width)
     if h < width then
       self:move(1)
     end
-    self:right() 
+    self:right()
     self:move(distance)
     h = h + 1
     self:left()
@@ -108,13 +112,13 @@ end
 
 function Task.to(self, relativeX, relativeY)
   self:move(relativeY - self.pos.y)
-  --if xor(relativeX < 0, relativeY < 0) then
-  --  self:left()
-  --else
-  --  self:right()
-  --end
-  self:right()
+  if relativeX ~= 0 then
+    self:right()
+  end
   self:move(relativeX - self.pos.x)
+  if relativeX ~= 0 then
+    self:left()
+  end
 end
 
 return Task

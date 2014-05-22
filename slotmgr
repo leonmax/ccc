@@ -1,0 +1,34 @@
+local slot = 1
+
+function select(slot)
+  if slot == nil or slot <= 0 or slot > 16 then
+    turtle.selectSlot(slot)
+  end
+end
+
+function getSelected()
+  return slot
+end
+
+function reloadSlot(slot)
+  origin = getSelected()
+  if slot == nil or slot <= 0 or slot > 16 then
+    slot = origin
+  end
+  result = false
+  for from=1,16 do
+    if from ~= slot then
+        turtle.select(from)
+      if (turtle.getItemCount(slot) == 0 or
+          turtle.compareTo(slot) ) then
+        print("transfer from slot "..from.." to "..slot)
+        turtle.transferTo(slot)
+        turtle.select(slot)
+        result = true
+        break
+      end
+    end
+  end
+  turtle.select(origin)
+  return result
+end
