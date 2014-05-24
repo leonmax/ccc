@@ -1,0 +1,220 @@
+local FRONT = vector.new( 0,  1,  0)
+local RIGHT = vector.new( 1,  0,  0)
+local BACK  = vector.new( 0, -1,  0)
+local LEFT  = vector.new(-1,  0,  0)
+local UP    = vector.new( 0,  0,  1)
+local DOWN  = vector.new( 0,  0, -1)
+
+Navigator = {}
+Navigator.__index = Navigator
+
+function Navigator.new(actor)
+  local self = setmetatable({}, Navigator)
+  self.startPos = self:locate()
+  print("I'm at: ("..self.pos:tostring().."), remain fuel: "..self:checkfuel())
+
+  self.dir = FRONT
+  self.sDir = FRONT
+  self.actor = actor
+  return self
+end
+
+function Navigator:with(actor)
+  self.actor = actor
+  return self
+end
+
+function Navigator:checkfuel()
+  fuel = turtle.getFuelLevel()
+  if fuel == 0 then
+    print("I'm EXHAUSTED! Feed me!")
+    return 0
+  else
+    print("remain fuel "..fuel)
+    return fuel
+  end
+end
+
+function Navigator:locate(coordinate)
+  --local x, y, z = gps.locate(5)
+  if x ~= nil then
+    self.pos = vector.new(x, y, z)
+  elseif coordinate ~= nil and coordinate.x ~= nil then
+    self.pos = coordinate
+    print("Manually input coordinate: ("..self.pos:tostring()..")")
+  elseif self.pos == nil or self.pos.x == nil then
+    self.pos = vector.new()
+    print("Totally lost, assume at: ("..self.pos:tostring()..")")
+  end
+  return self.pos
+end
+
+function Navigator:relative(coordinate)
+  if coordinate == nil or coordinate.x == nil then
+    coordinate = self.startPos
+  end
+  return self:locate() - coordinate
+end
+
+function Navigator:afterMove(dir, moveSuccess)
+  if moveSuccess then
+    self.pos = self.pos + dir
+    self.actor:act()
+    return dir
+  else
+    return vector.new()
+  end
+end
+
+function Navigator:forward1()
+  local result = turtle.forward()
+  return self:afterMove(self.dir, result)
+end
+
+function Navigator:back1()
+  local result = turtle.back()
+  return self:afterMove(-self.dir, result)
+end
+
+function Navigator:up1()
+  local result = turtle.up()
+  return self:afterMove(UP, result)
+end
+
+function Navigator:down1()
+  local result = turtle.down()
+  return self:afterMove(DOWN, result)
+end
+
+function Navigator:move(distance, vert)
+  local moved = vector.new()
+  for i=1, math.abs(distance) do
+    local result = nil
+    if vert~=nil and (vert==true or vert==1) then
+      if distance >= 0 then
+        result = self:up1()
+      else
+        result = self:down1()
+      end
+    else
+      if distance >= 0 then
+        result = self:forward1()
+      else
+        result = self:back1()
+      end
+    end
+    if result:length() == 0 then break end
+    moved = moved + result
+  end
+  if moved:length() ~= 0 then
+    print("move "..moved:length().." blocks")
+  end
+  return moved
+end
+
+function Navigator:forward(distance)
+  return self:move(distance)
+end
+
+function Navigator:back(distance)
+  return self:move(-distance)
+end
+
+function Navigator:up(distance)
+  return self:move(distance, true)
+end
+
+function Navigator:down(distance)
+  return self:move(-distance, true)
+end
+
+function Navigator:right(step)
+  if self.dir == LEFT then
+    self.dir = FRONT
+    print("original front")
+  elseif self.dir == FRONT then
+    self.dir = RIGHT
+    print("original right")
+  elseif self.dir == RIGHT then
+    self.dir = BACK
+    print("original back")
+  elseif self.dir == BACK then
+    self.dir = LEFT
+    print("original left")
+  end
+  turtle.turnRight()
+
+  if step == nil or step == 0 then
+    return vector.new()
+  end
+  return self:move(step)
+end
+
+function Navigator:left(step)
+  if self.dir == LEFT then
+    self.dir = BACK
+    print("original back")
+  elseif self.dir == BACK then
+    self.dir = RIGHT
+    print("original right")
+  elseif self.dir == RIGHT then
+    self.dir = FRONT
+    print("original front")
+  elseif self.dir == FRONT then
+    self.dir = LEFT
+    print("original left")
+  end
+  turtle.turnLeft()
+
+  if step == nil or step == 0 then
+    return vector.new()
+  end
+  return self:move(step)
+end
+
+function Navigator:cover(x, y, z)
+  pos = vector.new()
+  print("covering "..x.." X "..y)
+  for row=0,x,2 do
+    pos = pos + self:forward(y)
+    self:right()
+    if x - row >= 1 then
+      pos = pos + self:forward1()
+    end
+    self:right()
+
+    pos = pos + self:forward(y)
+    self:right()
+    if x - row >= 2 then
+      pos = pos + self:back1()
+    end
+    self:right()
+  end
+  pos = pos + self:to(-x,0,0)
+  return pos
+end
+
+function Navigator:wall(x, y, z)
+  pos = vector.new()
+  for height=1, z do
+    pos = pos + self:up1() + self:to(x, y, 0) + self:to(-x, -y, 0)
+  end
+  return pos
+  --self:to(vector.new(0, 0, 0))
+end
+
+function Navigator:to(x, y, z)
+  pos = vector.new()
+  if x ~= 0 then
+    pos = pos + self:right(x)
+    self:left()
+  end
+  pos = pos + self:move(y) + self:move(z, true)
+  return pos
+end
+
+function Navigator:callby(name, ...)
+  pos = Navigator[name](self, ...)
+  print("I'm at: ("..pos:tostring()..") dir: ("..self.dir:tostring()..")")
+  print("I'm at: ("..self:locate():tostring()..")")
+end

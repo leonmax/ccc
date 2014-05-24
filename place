@@ -1,44 +1,23 @@
-os.loadAPI("task")
+os.loadAPI("nav")
+os.loadAPI("actor")
 os.loadAPI("slotmgr")
 
-local Placer = {}
-Placer.__index = Placer
-
-function Placer.new(slot)
-  local self = setmetatable({}, Placer)
-  slotmgr.select(slot)
-  return self
-end
-
-function Placer.placeDown(self)
-  local success = turtle.placeDown(1)
-  if success then
-    print("placed a block below")
-  end
-  return success
-end
-
-function Placer.act(self)
-  if not turtle.detectDown() then
-    while not self:placeDown() do
-      if not slotmgr.reloadSlot() then
-        break
-      end
-    end
-  end
-end
-
 local arg = { ... }
-if #arg < 2 then
-  local program = fs.getName(shell.getRunningProgram())
-  print("Usage: "..program.." <width> <distance> [<slotnum>]")
-end
+if #arg > 0 then
+  if #arg < 2 then
+    local program = fs.getName(shell.getRunningProgram())
+    print("Usage: "..program.." <relative x> <relative y> <relative z>")
+    return
+  end
 
-local slot = 0
-local w = tonumber(arg[1])
-local d = tonumber(arg[2])
-if #arg == 3 then
-  slot = tonumber(arg[3])
+  local name = arg[1]
+  local x = tonumber(arg[2])
+  local y = 0
+  local z = 0
+  if #arg >= 3 then y = tonumber(arg[3]) end
+  if #arg >= 4 then z = tonumber(arg[4]) end
+  local slot = 0
+  if #arg >= 5 then slot = tonumber(arg[5]) end
+
+  nav.Navigator.new(actor.placer):callby(name, x, y, z)
 end
-local actor = Placer.new(slot)
-task.Task.new(actor):cover(w, d)

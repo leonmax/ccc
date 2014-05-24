@@ -1,26 +1,22 @@
-os.loadAPI("task")
-
-local Walker = {}
-Walker.__index = Walker
-
-function Walker.new()
-  local self = setmetatable({}, Walker)
-  return self
-end
-
-function Walker.act(self)
-end
+os.loadAPI("nav")
+os.loadAPI("actor")
+os.loadAPI("slotmgr")
 
 local arg = { ... }
-if #arg < 2 then
-  local program = fs.getName(shell.getRunningProgram())
-  print("Usage: "..program.." <relative x> <relative y>")
+if #arg > 0 then
+  if #arg < 2 or type(arg[1]) ~= "string" then
+    local program = fs.getName(shell.getRunningProgram())
+    print("Usage: "..program.." <route> <relative x> [<relative y> [<relative z>]]")
+    return
+  end
+
+  local name = arg[1]
+
+  local x = tonumber(arg[2])
+  local y = 0
+  local z = 0
+  if #arg >= 3 then y = tonumber(arg[3]) end
+  if #arg >= 4 then z = tonumber(arg[4]) end
+
+  nav.Navigator.new(actor.walker):callby(name, x, y, z)
 end
-
-local x = tonumber(arg[1])
-local y = tonumber(arg[2])
-local z = 0
-if #arg >= 3 then z = tonumber(arg[3]) end
-
-local actor = Walker.new()
-task.Task.new(actor):to(vector.new(x, y, z))

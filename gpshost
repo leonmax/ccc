@@ -1,0 +1,5 @@
+local monitor = peripheral.wrap("CHANGEME")
+print("Hosting gps, press any key to quit")
+term.redirect(monitor)
+shell.run("gps", "host", X, Y, Z)
+term.restore()
