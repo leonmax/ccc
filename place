@@ -1,5 +1,4 @@
 os.loadAPI("nav")
-os.loadAPI("actor")
 os.loadAPI("slotmgr")
 
 local arg = { ... }
@@ -19,5 +18,5 @@ if #arg > 0 then
   local slot = 0
   if #arg >= 5 then slot = tonumber(arg[5]) end
 
-  nav.Navigator.new(actor.placer):callby(name, x, y, z)
+  nav.agent:with(nav.placer):callby(name, x, y, z)
 end

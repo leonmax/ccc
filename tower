@@ -1,6 +1,4 @@
-os.loadAPI("actor")
 os.loadAPI("nav")
-os.loadAPI("slotmgr")
 
 local arg = { ... }
 if #arg < 3 then
@@ -17,9 +15,9 @@ assert(x > 4, "x too small, at least 5")
 assert(y > 3, "y too small, at least 4")
 
 
-local w = actor.walker
-local p = actor.placer
-local n = nav.Navigator.new(w)
+local w = nav.walker
+local p = nav.placer
+local n = nav.agent
 
 pos = vector.new()
 local floorHeight = 5
@@ -29,7 +27,7 @@ while i <= z do
   if z - i < floorHeight then
     pos = pos + n:with(p):wall( x, y, z-i)
     i = z + 1
-  else
+  elsew
     pos = pos + n:with(p):wall( x, y, floorHeight)
     pos = pos + n:with(w):to(  2,  1, 0)
     pos = pos + n:with(p):cover( x-3, y-2)

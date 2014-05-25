@@ -1,5 +1,4 @@
 os.loadAPI("nav")
-os.loadAPI("actor")
 os.loadAPI("slotmgr")
 
 local arg = { ... }
@@ -18,5 +17,5 @@ if #arg > 0 then
   if #arg >= 3 then y = tonumber(arg[3]) end
   if #arg >= 4 then z = tonumber(arg[4]) end
 
-  nav.Navigator.new(actor.walker):callby(name, x, y, z)
+  nav.agent:callby(name, x, y, z)
 end

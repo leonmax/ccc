@@ -4,5 +4,5 @@ then
   echo "computer id can't be empty"
   exit 1
 fi
-mkdir -pv /Users/leonmax/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1
-cp -rv ./* /Users/leonmax/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1/
+mkdir -pv ~/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1
+cp -rv ./* ~/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1/

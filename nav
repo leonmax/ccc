@@ -1,3 +1,102 @@
+local SlotManager = {}
+SlotManager.__index = SlotManager
+
+function SlotManager.new()
+  local self = setmetatable({}, SlotManager)
+  self.selectedSlot = 1
+  return self
+end
+
+function SlotManager:select(s)
+  if s == nil or s <= 0 or s > 16 then
+    s = 1
+  end
+  turtle.select(s)
+  self.selectedSlot = s
+  print("selected slot "..s)
+end
+
+function SlotManager:getSelected()
+  if self.selectedSlot == nil or self.selectedSlot < 1 or self.selectedSlot >= 16 then
+    self.selectedSlot = 1
+  end
+  return self.selectedSlot
+end
+
+function SlotManager:reloadSlot(slot)
+  local origin = self:getSelected()
+  print("reload slot original selected slot "..origin)
+  if slot == nil or slot <= 0 or slot > 16 then
+    slot = origin
+  end
+  local result = false
+  for from=1,16 do
+    if from ~= slot then
+        turtle.select(from)
+      if (turtle.getItemCount(slot) == 0 or turtle.compareTo(slot)) and
+         turtle.getItemCount(from) > 0 then
+        print("transfer from slot "..from.." to "..slot)
+        turtle.transferTo(slot)
+        turtle.select(slot)
+        result = true
+        break
+      end
+    end
+  end
+  turtle.select(origin)
+  return result
+end
+
+local slotmgr = SlotManager.new()
+
+local Walker = {}
+Walker.__index = Walker
+
+function Walker.new()
+  local self = setmetatable({}, Walker)
+  return self
+end
+
+function Walker:beforeMove()
+end
+
+function Walker:afterMove()
+end
+
+walker = Walker.new()
+
+local Placer = {}
+Placer.__index = Placer
+
+function Placer.new()
+  local self = setmetatable({}, Placer)
+  self.slotmgr = slotmgr
+  return self
+end
+
+function Placer:placeDown()
+  local success = turtle.placeDown(1)
+  if success then
+    print("placed a block below")
+  end
+  return success
+end
+
+function Placer:beforeMove()
+end
+
+function Placer:afterMove()
+  if not turtle.detectDown() then
+    if not self:placeDown() then
+      if self.slotmgr:reloadSlot() then
+        self:placeDown()
+      end
+    end
+  end
+end
+
+placer = Placer.new()
+
 local FRONT = vector.new( 0,  1,  0)
 local RIGHT = vector.new( 1,  0,  0)
 local BACK  = vector.new( 0, -1,  0)
@@ -8,14 +107,14 @@ local DOWN  = vector.new( 0,  0, -1)
 Navigator = {}
 Navigator.__index = Navigator
 
-function Navigator.new(actor)
+function Navigator.new()
   local self = setmetatable({}, Navigator)
   self.startPos = self:locate()
   print("I'm at: ("..self.pos:tostring().."), remain fuel: "..self:checkfuel())
 
   self.dir = FRONT
-  self.sDir = FRONT
-  self.actor = actor
+  self.startDir = FRONT
+  self.actor = walker
   return self
 end
 
@@ -56,10 +155,14 @@ function Navigator:relative(coordinate)
   return self:locate() - coordinate
 end
 
+function Navigator:beforeMove()
+  self.actor:beforeMove()
+end
+
 function Navigator:afterMove(dir, moveSuccess)
   if moveSuccess then
     self.pos = self.pos + dir
-    self.actor:act()
+    self.actor:afterMove()
     return dir
   else
     return vector.new()
@@ -67,21 +170,25 @@ function Navigator:afterMove(dir, moveSuccess)
 end
 
 function Navigator:forward1()
+  self:beforeMove()
   local result = turtle.forward()
   return self:afterMove(self.dir, result)
 end
 
 function Navigator:back1()
+  self:beforeMove()
   local result = turtle.back()
   return self:afterMove(-self.dir, result)
 end
 
 function Navigator:up1()
+  self:beforeMove()
   local result = turtle.up()
   return self:afterMove(UP, result)
 end
 
 function Navigator:down1()
+  self:beforeMove()
   local result = turtle.down()
   return self:afterMove(DOWN, result)
 end
@@ -184,11 +291,11 @@ function Navigator:cover(x, y, z)
     self:right()
 
     pos = pos + self:forward(y)
-    self:right()
+    self:left()
     if x - row >= 2 then
-      pos = pos + self:back1()
+      pos = pos + self:forward1()
     end
-    self:right()
+    self:left()
   end
   pos = pos + self:to(-x,0,0)
   return pos
@@ -218,3 +325,5 @@ function Navigator:callby(name, ...)
   print("I'm at: ("..pos:tostring()..") dir: ("..self.dir:tostring()..")")
   print("I'm at: ("..self:locate():tostring()..")")
 end
+
+agent = Navigator.new(actor.walker)
