@@ -14,7 +14,7 @@ local z = tonumber(arg[3])
 assert(x > 4, "x too small, at least 5")
 assert(y > 3, "y too small, at least 4")
 
-
+print(nav)
 local w = nav.walker
 local p = nav.placer
 local n = nav.agent
@@ -27,7 +27,7 @@ while i <= z do
   if z - i < floorHeight then
     pos = pos + n:with(p):wall( x, y, z-i)
     i = z + 1
-  elsew
+  else
     pos = pos + n:with(p):wall( x, y, floorHeight)
     pos = pos + n:with(w):to(  2,  1, 0)
     pos = pos + n:with(p):cover( x-3, y-2)

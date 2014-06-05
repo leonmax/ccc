@@ -1,5 +1,4 @@
 os.loadAPI("nav")
-os.loadAPI("slotmgr")
 
 local arg = { ... }
 if #arg > 0 then

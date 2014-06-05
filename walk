@@ -1,5 +1,4 @@
 os.loadAPI("nav")
-os.loadAPI("slotmgr")
 
 local arg = { ... }
 if #arg > 0 then
@@ -10,10 +9,10 @@ if #arg > 0 then
   end
 
   local name = arg[1]
-
   local x = tonumber(arg[2])
   local y = 0
   local z = 0
+
   if #arg >= 3 then y = tonumber(arg[3]) end
   if #arg >= 4 then z = tonumber(arg[4]) end
 

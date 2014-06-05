@@ -5,4 +5,5 @@ then
   exit 1
 fi
 mkdir -pv ~/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1
+rm -rvf ~/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1/*
 cp -rv ./* ~/Library/Application\ Support/technic/modpacks/tekkitmain/saves/Badass/computer/$1/

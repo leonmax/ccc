@@ -279,6 +279,11 @@ function Navigator:left(step)
   return self:move(step)
 end
 
+function Navigator:turnAound(step)
+  self:left()
+  self:left()
+end
+
 function Navigator:cover(x, y, z)
   pos = vector.new()
   print("covering "..x.." X "..y)
@@ -326,4 +331,4 @@ function Navigator:callby(name, ...)
   print("I'm at: ("..self:locate():tostring()..")")
 end
 
-agent = Navigator.new(actor.walker)
+agent = Navigator.new(walker)

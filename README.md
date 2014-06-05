@@ -1,4 +1,4 @@
 ccc
 ===
 
-Code for ComputerCraft in minecraft
+Code for ComputerCraft
