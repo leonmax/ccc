@@ -97,33 +97,33 @@ end
 
 placer = Placer.new()
 
-local FRONT = vector.new( 0,  1,  0)
-local RIGHT = vector.new( 1,  0,  0)
-local BACK  = vector.new( 0, -1,  0)
-local LEFT  = vector.new(-1,  0,  0)
+local NORTH = vector.new( 0,  1,  0)
+local EAST  = vector.new( 1,  0,  0)
+local SOUTH = vector.new( 0, -1,  0)
+local WEST  = vector.new(-1,  0,  0)
 local UP    = vector.new( 0,  0,  1)
 local DOWN  = vector.new( 0,  0, -1)
 
-Navigator = {}
-Navigator.__index = Navigator
+Agent = {}
+Agent.__index = Agent
 
-function Navigator.new()
-  local self = setmetatable({}, Navigator)
+function Agent.new()
+  local self = setmetatable({}, Agent)
   self.startPos = self:locate()
   print("I'm at: ("..self.pos:tostring().."), remain fuel: "..self:checkfuel())
 
-  self.dir = FRONT
-  self.startDir = FRONT
+  self.orient = NORTH
+  self.startOrient = NORTH
   self.actor = walker
   return self
 end
 
-function Navigator:with(actor)
+function Agent:with(actor)
   self.actor = actor
   return self
 end
 
-function Navigator:checkfuel()
+function Agent:checkfuel()
   fuel = turtle.getFuelLevel()
   if fuel == 0 then
     print("I'm EXHAUSTED! Feed me!")
@@ -134,13 +134,20 @@ function Navigator:checkfuel()
   end
 end
 
-function Navigator:locate(coordinate)
+function Agent:locate(coordinate)
+  self.pos = self:loadCoordinate()
+  if self.pos == nil then
+    print("Load coordinate from history: ("..self.pos:tostring()..")")
+    return self.pos
+  end
+
   --local x, y, z = gps.locate(5)
   if x ~= nil then
     self.pos = vector.new(x, y, z)
   elseif coordinate ~= nil and coordinate.x ~= nil then
     self.pos = coordinate
     print("Manually input coordinate: ("..self.pos:tostring()..")")
+    self:saveCoordinate(self.pos)
   elseif self.pos == nil or self.pos.x == nil then
     self.pos = vector.new()
     print("Totally lost, assume at: ("..self.pos:tostring()..")")
@@ -148,187 +155,210 @@ function Navigator:locate(coordinate)
   return self.pos
 end
 
-function Navigator:relative(coordinate)
+function Agent:close()
+  self:saveCoordinate()
+end
+
+function Agent:loadCoordinate()
+  local handle = fs.open("state/coordinate", "r")
+  self.pos = textutils.unserialize(handle.readLine())
+  self.orient = textutils.unserialize(handle.readLine())
+  -- self.pos = vector.new(t[1], t[2], t[3])
+  return self.pos
+end
+
+function Agent:saveCoordinate()
+  local handle = fs.open("state/coordinate", "w")
+  textutils.serialize(handle.writeLine(self.pos))
+  textutils.serialize(handle.writeLine(self.orient))
+end
+
+function Agent:relative(coordinate)
   if coordinate == nil or coordinate.x == nil then
     coordinate = self.startPos
   end
   return self:locate() - coordinate
 end
 
-function Navigator:beforeMove()
+function Agent:beforeEachMove()
   self.actor:beforeMove()
 end
 
-function Navigator:afterMove(dir, moveSuccess)
-  if moveSuccess then
-    self.pos = self.pos + dir
-    self.actor:afterMove()
-    return dir
-  else
-    return vector.new()
-  end
+function Agent:afterEachMove()
+  self.actor:afterMove()
 end
 
-function Navigator:forward1()
-  self:beforeMove()
-  local result = turtle.forward()
-  return self:afterMove(self.dir, result)
-end
-
-function Navigator:back1()
-  self:beforeMove()
-  local result = turtle.back()
-  return self:afterMove(-self.dir, result)
-end
-
-function Navigator:up1()
-  self:beforeMove()
-  local result = turtle.up()
-  return self:afterMove(UP, result)
-end
-
-function Navigator:down1()
-  self:beforeMove()
-  local result = turtle.down()
-  return self:afterMove(DOWN, result)
-end
-
-function Navigator:move(distance, vert)
-  local moved = vector.new()
+function Agent:move(distance, vert)
+  local original = self.pos
   for i=1, math.abs(distance) do
-    local result = nil
+    self:beforeEachMove()
+
+    -- move 1 block
+    local success = nil
+    local dir = nil
     if vert~=nil and (vert==true or vert==1) then
-      if distance >= 0 then
-        result = self:up1()
+      if distance > 0 then
+        dir = UP
+        success = turtle.up()
       else
-        result = self:down1()
+        dir = DOWN
+        success = turtle.down()
       end
     else
-      if distance >= 0 then
-        result = self:forward1()
+      if distance > 0 then
+        dir = self.orient
+        success = turtle.forward()
       else
-        result = self:back1()
+        dir = -self.orient
+        success = turtle.back()
       end
     end
-    if result:length() == 0 then break end
-    moved = moved + result
+
+    -- stop if cannot move
+    if success then break end
+    local result = self:afterEachMove()
+    self.pos = self.pos + dir
   end
+  -- after all move
+  local moved = original - self.pos
   if moved:length() ~= 0 then
     print("move "..moved:length().." blocks")
+    self:saveCoordinate()
   end
   return moved
 end
 
-function Navigator:forward(distance)
+function Agent:forward(distance)
+  if distance == nil then distance = 1 end
   return self:move(distance)
 end
 
-function Navigator:back(distance)
+function Agent:back(distance)
+  if distance == nil then distance = 1 end
   return self:move(-distance)
 end
 
-function Navigator:up(distance)
+function Agent:up(distance)
+  if distance == nil then distance = 1 end
   return self:move(distance, true)
 end
 
-function Navigator:down(distance)
+function Agent:down(distance)
+  if distance == nil then distance = 1 end
   return self:move(-distance, true)
 end
 
-function Navigator:right(step)
-  if self.dir == LEFT then
-    self.dir = FRONT
-    print("original front")
-  elseif self.dir == FRONT then
-    self.dir = RIGHT
-    print("original right")
-  elseif self.dir == RIGHT then
-    self.dir = BACK
-    print("original back")
-  elseif self.dir == BACK then
-    self.dir = LEFT
-    print("original left")
+function Agent:left(step)
+  if step == nil or step == 0 then
+    return vector.new()
   end
+
+  self:turnLeft()
+  local result = self:move(step)
+  self:turnRight()
+  return result
+end
+
+function Agent:right(step)
+  if step == nil or step == 0 then
+    return vector.new()
+  end
+
+  self:turnRight()
+  local result = self:move(step)
+  self:turnLeft()
+  return result
+end
+
+function orientName(orient)
+  if orient == NORTH then
+    return "NORTH"
+  elseif orient == SOUTH then
+    return "SOUTH"
+  elseif orient == EAST then
+    return "EAST"
+  elseif orient == WEST then
+    return "WEST"
+  end
+end
+
+function Agent:turnRight()
+  if self.orient == NORTH then
+    self.orient = EAST
+  elseif self.orient == EAST then
+    self.orient = SOUTH
+  elseif self.orient == SOUTH then
+    self.orient = WEST
+  elseif self.orient == WEST then
+    self.orient = NORTH
+  end
+  print(self:orientName(self.orient))
   turtle.turnRight()
-
-  if step == nil or step == 0 then
-    return vector.new()
-  end
-  return self:move(step)
 end
 
-function Navigator:left(step)
-  if self.dir == LEFT then
-    self.dir = BACK
-    print("original back")
-  elseif self.dir == BACK then
-    self.dir = RIGHT
-    print("original right")
-  elseif self.dir == RIGHT then
-    self.dir = FRONT
-    print("original front")
-  elseif self.dir == FRONT then
-    self.dir = LEFT
-    print("original left")
+function Agent:turnLeft()
+  if self.orient == NORTH then
+    self.orient = WEST
+  elseif self.orient == WEST then
+    self.orient = SOUTH
+  elseif self.orient == SOUTH then
+    self.orient = EAST
+  elseif self.orient == EAST then
+    self.orient = NORTH
   end
+  print(self:orientName(self.orient))
   turtle.turnLeft()
-
-  if step == nil or step == 0 then
-    return vector.new()
-  end
-  return self:move(step)
 end
 
-function Navigator:turnAound(step)
-  self:left()
-  self:left()
+function Agent:turnAround(step)
+  self:turnLeft()
+  self:turnLeft()
 end
 
-function Navigator:cover(x, y, z)
+function Agent:cover(x, y, z)
   pos = vector.new()
   print("covering "..x.." X "..y)
   for row=0,x,2 do
     pos = pos + self:forward(y)
-    self:right()
+    self:turnRight()
     if x - row >= 1 then
-      pos = pos + self:forward1()
+      pos = pos + self:forward(1)
     end
-    self:right()
+    self:turnRight()
 
     pos = pos + self:forward(y)
-    self:left()
+    self:turnLeft()
     if x - row >= 2 then
-      pos = pos + self:forward1()
+      pos = pos + self:forward(1)
     end
-    self:left()
+    self:turnLeft()
   end
   pos = pos + self:to(-x,0,0)
   return pos
 end
 
-function Navigator:wall(x, y, z)
+function Agent:wall(x, y, z)
   pos = vector.new()
   for height=1, z do
-    pos = pos + self:up1() + self:to(x, y, 0) + self:to(-x, -y, 0)
+    pos = pos + self:up(1) + self:to(x, y, 0) + self:to(-x, -y, 0)
   end
   return pos
   --self:to(vector.new(0, 0, 0))
 end
 
-function Navigator:to(x, y, z)
+function Agent:to(x, y, z)
   pos = vector.new()
   if x ~= 0 then
     pos = pos + self:right(x)
-    self:left()
   end
   pos = pos + self:move(y) + self:move(z, true)
   return pos
 end
 
-function Navigator:callby(name, ...)
-  pos = Navigator[name](self, ...)
-  print("I'm at: ("..pos:tostring()..") dir: ("..self.dir:tostring()..")")
+function Agent:callby(name, ...)
+  pos = Agent[name](self, ...)
+  print("I'm at: ("..pos:tostring()..") orient: ("..self:orientName(self.orient)..")")
   print("I'm at: ("..self:locate():tostring()..")")
 end
 
-agent = Navigator.new(walker)
+agent = Agent.new(walker)
