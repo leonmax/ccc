@@ -188,30 +188,27 @@ function Agent:afterEachMove()
   self.actor:afterMove()
 end
 
-function Agent:move(distance, vert)
+function Agent:move(distance, dir)
+  if distance == nil then distance = 1 end
+  if dir == nil then dir = self.orient end
   local original = self.pos
+
+  if distance < 0 then dir = -dir end
+  -- move distance
   for i=1, math.abs(distance) do
     self:beforeEachMove()
 
     -- move 1 block
     local success = nil
-    local dir = nil
-    if vert~=nil and (vert==true or vert==1) then
-      if distance > 0 then
-        dir = UP
-        success = turtle.up()
-      else
-        dir = DOWN
-        success = turtle.down()
-      end
-    else
-      if distance > 0 then
-        dir = self.orient
-        success = turtle.forward()
-      else
-        dir = -self.orient
-        success = turtle.back()
-      end
+    if dir == UP then
+      success = turtle.up()
+    elseif dir == DOWN then
+      success = turtle.down()
+    elseif dir == self.orient then
+      success = turtle.forward()
+    elseif dir == -self.orient then
+      dir = -self.orient
+      success = turtle.back()
     end
 
     -- stop if cannot move
@@ -229,43 +226,31 @@ function Agent:move(distance, vert)
 end
 
 function Agent:forward(distance)
-  if distance == nil then distance = 1 end
-  return self:move(distance)
+  return self:move(distance, self.orient)
 end
 
 function Agent:back(distance)
-  if distance == nil then distance = 1 end
-  return self:move(-distance)
+  return self:move(distance, -self.orient)
 end
 
 function Agent:up(distance)
-  if distance == nil then distance = 1 end
-  return self:move(distance, true)
+  return self:move(distance, UP)
 end
 
 function Agent:down(distance)
-  if distance == nil then distance = 1 end
-  return self:move(-distance, true)
+  return self:move(distance, DOWN)
 end
 
-function Agent:left(step)
-  if step == nil or step == 0 then
-    return vector.new()
-  end
-
+function Agent:left(distance)
   self:turnLeft()
-  local result = self:move(step)
+  local result = self:move(distance, self.orient)
   self:turnRight()
   return result
 end
 
 function Agent:right(step)
-  if step == nil or step == 0 then
-    return vector.new()
-  end
-
   self:turnRight()
-  local result = self:move(step)
+  local result = self:move(distance, self.orient)
   self:turnLeft()
   return result
 end
@@ -318,22 +303,25 @@ end
 function Agent:cover(x, y, z)
   pos = vector.new()
   print("covering "..x.." X "..y)
-  for row=0,x,2 do
-    pos = pos + self:forward(y)
-    self:turnRight()
-    if x - row >= 1 then
-      pos = pos + self:forward(1)
-    end
-    self:turnRight()
+  for height=1, z do
+    for row=0,x,2 do
+      pos = pos + self:forward(y)
+      self:turnRight()
+      if x - row >= 1 then
+        pos = pos + self:forward(1)
+      end
+      self:turnRight()
 
-    pos = pos + self:forward(y)
-    self:turnLeft()
-    if x - row >= 2 then
-      pos = pos + self:forward(1)
+      pos = pos + self:forward(y)
+      self:turnLeft()
+      if x - row >= 2 then
+        pos = pos + self:forward(1)
+      end
+      self:turnLeft()
     end
-    self:turnLeft()
+    pos = pos + self:to(-x,0,0)
+    pos = pos + self:up(1)
   end
-  pos = pos + self:to(-x,0,0)
   return pos
 end
 
