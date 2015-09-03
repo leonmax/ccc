@@ -1,0 +1,38 @@
+mapmap = {
+  "iron" :    vector.new(0,1,0),
+  "redstone": vector.new(0,2,0),
+  "wood":     vector.new(0,3,0),
+  "sand":     vector.new(0,4,0),
+}
+
+toolmap = {
+
+}
+
+recipe = {
+  "" =
+}
+
+local Recipe = {}
+Recipe.__index = Recipe
+
+function Recipe.new(id, type, data)
+  local self = setmetatable({}, Recipe)
+  self.id = id
+  self.type = type
+  self.data = data
+  return self
+end
+
+local RecipeBook = {}
+RecipeBook.__index = RecipeBook
+
+function Recipe.new()
+  local self = setmetatable({}, Recipe)
+  self.book = {}
+
+  return self
+end
+
+function Recipe:save(recipe)
+end

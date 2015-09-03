@@ -1,0 +1,57 @@
+write('Please enter the bot\'s id: ')
+bot = tonumber(read()) -- the ID of the turtle
+
+shell.run('clear') --clear the screen
+
+mode = 0 -- set the mode to dig
+rednet.open('right') -- open wifi port
+while true do -- start infinite loop
+  event, key = os.pullEvent() -- wait for input
+  shell.run('clear') -- clear the screen again :P
+  if key == 's' then --if the s button is pressed
+    rednet.send(bot, 'backward')-- send message for down button
+    print('Backward') -- write on the screen
+  end
+  if key == 'a' then -- left
+    rednet.send(bot, 'left')
+    print('Left')
+  end
+  if key == 'w' then --up
+    rednet.send(bot, 'forward')
+    print('Forward')
+  end
+  if key == 'd' then -- right
+    rednet.send(bot, 'right')
+    print('Right')
+  end
+  if key == 200 then
+    rednet.send(bot, 'up')
+    print('Up')
+  end
+  if key == 208 then
+    rednet.send(bot, 'down')
+    print('Down')
+  end
+
+  if key == ' ' then --if the key is the spacebar
+    if mode == 0 then -- if on digmode
+      rednet.send(bot, 'dig') -- send message to dig
+      print('Dig') -- write it
+    elseif mode == 1 then -- if on placemode
+      rednet.send(bot, 'place') -- send message to place block
+      print('Place') --write
+    end
+  end
+  if key == 203 then --if the key is left
+    mode = 0 -- set to digmode
+    print('Dig mode selected.') --write it
+  end
+  if key == 205 then -- if right
+    mode = 1 -- set to placemode
+    print('Place mode selected.') --write
+  end
+  if key == 29 then --if the left ctrl is pressed
+    rednet.send(bot, 'rs') -- send message to enable redstone
+    print('Redstone activated.')-- write
+  end
+end
